@@ -67,39 +67,13 @@ const Index = () => {
   const [teacherName, setTeacherName] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const analyzeMessage = (message: string): Task | null => {
-    const lowerMsg = message.toLowerCase();
-    
-    let category: Task['category'] = 'other';
-    let title = '';
-    const description = message;
-    let priority: Task['priority'] = 'medium';
-    
-    if (lowerMsg.includes('пар') || lowerMsg.includes('занят') || lowerMsg.includes('урок')) {
-      category = 'schedule';
-      if (lowerMsg.includes('убр') || lowerMsg.includes('отмен')) {
-        title = 'Отменить занятие';
-      } else if (lowerMsg.includes('перенес')) {
-        title = 'Перенести занятие';
-      }
-      priority = 'high';
-    } else if (lowerMsg.includes('зал') || lowerMsg.includes('кабинет') || lowerMsg.includes('аудитор')) {
-      category = 'facility';
-      title = 'Управление помещением';
-      priority = 'medium';
-    } else if (lowerMsg.includes('дистант') || lowerMsg.includes('онлайн') || lowerMsg.includes('удалён')) {
-      category = 'format';
-      title = 'Изменить формат обучения';
-      priority = 'high';
-    }
-
-    if (!title) {
-      const words = message.split(' ').slice(0, 5).join(' ');
-      title = words.length > 40 ? words.substring(0, 40) + '...' : words;
-    }
-
+  const analyzeMessage = (message: string, teacher: string): Task => {
     const deadline = new Date();
-    deadline.setDate(deadline.getDate() + 3);
+    deadline.setDate(deadline.getDate() - 1);
+
+    const title = teacher 
+      ? `${teacher} до ${deadline.toLocaleDateString('ru-RU')}`
+      : `Задача до ${deadline.toLocaleDateString('ru-RU')}`;
 
     return {
       id: Date.now().toString(),
@@ -107,10 +81,10 @@ const Index = () => {
       description: message,
       deadline: deadline.toISOString().split('T')[0],
       completed: false,
-      category,
-      priority,
+      category: 'other',
+      priority: 'medium',
       createdAt: new Date(),
-      teacherName: teacherName || undefined
+      teacherName: teacher || undefined
     };
   };
 
@@ -129,31 +103,29 @@ const Index = () => {
     setMessages(prev => [...prev, userMessage]);
 
     setTimeout(() => {
-      const extractedTask = analyzeMessage(inputMessage);
+      const extractedTask = analyzeMessage(inputMessage, teacherName);
       
-      if (extractedTask) {
-        setTasks(prev => [extractedTask, ...prev]);
+      setTasks(prev => [extractedTask, ...prev]);
 
-        const botMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          type: 'bot',
-          content: `✅ Создал задачу: "${extractedTask.title}"\n\nДедлайн: ${new Date(extractedTask.deadline).toLocaleDateString('ru-RU')}\nПриоритет: ${extractedTask.priority === 'high' ? 'Высокий' : extractedTask.priority === 'medium' ? 'Средний' : 'Низкий'}`,
-          timestamp: new Date(),
-          extractedTask
-        };
+      const botMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        content: `✅ Создал задачу: "${extractedTask.title}"\n\nДедлайн: ${new Date(extractedTask.deadline).toLocaleDateString('ru-RU')}`,
+        timestamp: new Date(),
+        extractedTask
+      };
 
-        setMessages(prev => [...prev, botMessage]);
-        
-        toast({
-          title: 'Задача создана!',
-          description: extractedTask.title,
-        });
-      }
+      setMessages(prev => [...prev, botMessage]);
+      
+      toast({
+        title: 'Задача создана!',
+        description: extractedTask.title,
+      });
 
       setIsProcessing(false);
       setInputMessage('');
       setTeacherName('');
-    }, 1000);
+    }, 800);
   };
 
   const toggleTaskComplete = (taskId: string) => {
