@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,6 +18,7 @@ interface Task {
   category: 'schedule' | 'facility' | 'format' | 'other';
   priority: 'high' | 'medium' | 'low';
   createdAt: Date;
+  teacherName?: string;
 }
 
 interface ChatMessage {
@@ -62,6 +64,7 @@ const Index = () => {
   ]);
 
   const [inputMessage, setInputMessage] = useState('');
+  const [teacherName, setTeacherName] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const analyzeMessage = (message: string): Task | null => {
@@ -106,7 +109,8 @@ const Index = () => {
       completed: false,
       category,
       priority,
-      createdAt: new Date()
+      createdAt: new Date(),
+      teacherName: teacherName || undefined
     };
   };
 
@@ -148,6 +152,7 @@ const Index = () => {
 
       setIsProcessing(false);
       setInputMessage('');
+      setTeacherName('');
     }, 1000);
   };
 
@@ -260,6 +265,12 @@ const Index = () => {
                                 <Icon name="Calendar" size={14} />
                                 До {new Date(task.deadline).toLocaleDateString('ru-RU')}
                               </span>
+                              {task.teacherName && (
+                                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                  <Icon name="User" size={14} />
+                                  {task.teacherName}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -330,7 +341,13 @@ const Index = () => {
                   </div>
                 )}
               </div>
-              <div className="p-4 border-t">
+              <div className="p-4 border-t space-y-3">
+                <Input
+                  value={teacherName}
+                  onChange={(e) => setTeacherName(e.target.value)}
+                  placeholder="ФИО преподавателя (необязательно)"
+                  className="w-full"
+                />
                 <div className="flex gap-2">
                   <Textarea
                     value={inputMessage}
@@ -390,6 +407,12 @@ const Index = () => {
                           <Icon name="Calendar" size={14} />
                           Дедлайн: {new Date(task.deadline).toLocaleDateString('ru-RU')}
                         </span>
+                        {task.teacherName && (
+                          <span className="flex items-center gap-1">
+                            <Icon name="User" size={14} />
+                            {task.teacherName}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
